@@ -11,7 +11,7 @@ window.STAMP_CONFIG = {
   PRIVACY_URL: 'privacy.html',
 
   // Shown in the footer. Use an inbox you actually read (privacy requests go here).
-  CONTACT_EMAIL: '',
+  CONTACT_EMAIL: 'contact.wizard.io@gmail.com',
 
   // Leave empty until payments are connected: the Pro button will say "launching soon".
   CHECKOUT_URL: '',
