@@ -65,12 +65,12 @@ revoke all                    on public.downloads  from anon, authenticated;
 
 -- ---------- settings (change these when you change the rules) ---------
 create or replace function public.free_limit() returns int
-language sql immutable as $$ select 2 $$;
+language sql immutable as $$ select 1 $$;
 
 -- Must match PRIVACY_VERSION in config.js. Bump both when the policy changes:
 -- every user will be asked to accept the new version before downloading.
 create or replace function public.current_privacy_version() returns text
-language sql immutable as $$ select '2026-10-03' $$;
+language sql immutable as $$ select '2026-10-04' $$;
 
 -- ---------- helpers --------------------------------------------------
 -- Normalise so that Name+promo@gmail.com, n.a.m.e@gmail.com and name@gmail.com
@@ -212,3 +212,66 @@ grant execute on function public.delete_my_account()  to authenticated;
 -- ---------- making someone Pro by hand (until payments are connected) --
 -- update public.profiles set is_pro = true, pro_until = now() + interval '1 month'
 --   where id = (select id from auth.users where email = 'client@example.com');
+
+-- =====================================================================
+-- Added 2026-10-04: first PDF without an account (one per network, by salted IP hash, kept 90 days).
+-- The account allowance is now 1 (total 2 free PDFs). Run this block too.
+-- The last statement needs pg_cron (see the retention section above).
+-- =====================================================================
+-- First PDF without an account (one per network), account allowance 1, policy v2026-10-04
+create table if not exists public.app_secrets (name text primary key, value text not null);
+alter table public.app_secrets enable row level security;
+revoke all on public.app_secrets from anon, authenticated;
+insert into public.app_secrets (name, value)
+  values ('ip_salt', encode(extensions.gen_random_bytes(32), 'hex')) on conflict do nothing;
+
+create table if not exists public.anon_usage (
+  ip_key  text primary key,
+  used_at timestamptz not null default now()
+);
+alter table public.anon_usage enable row level security;
+revoke all on public.anon_usage from anon, authenticated;
+
+create or replace function public.client_ip_key() returns text
+language plpgsql stable security definer set search_path = public, extensions as $$
+declare h json; ip text; salt text;
+begin
+  h := nullif(current_setting('request.headers', true), '')::json;
+  if h is null then return null; end if;
+  ip := coalesce(nullif(h->>'cf-connecting-ip', ''), nullif(trim(split_part(coalesce(h->>'x-forwarded-for', ''), ',', 1)), ''), nullif(h->>'x-real-ip', ''));
+  if ip is null then return null; end if;
+  select value into salt from public.app_secrets where name = 'ip_salt';
+  return encode(extensions.digest(salt || '|' || ip, 'sha256'), 'hex');
+end $$;
+
+create or replace function public.get_anon_quota() returns json
+language plpgsql security definer set search_path = public as $$
+declare k text := public.client_ip_key();
+begin
+  return json_build_object('available', k is not null and not exists (select 1 from public.anon_usage where ip_key = k));
+end $$;
+
+create or replace function public.consume_anon_download() returns json
+language plpgsql security definer set search_path = public as $$
+declare k text := public.client_ip_key();
+begin
+  if k is null then return json_build_object('ok', false, 'reason', 'unknown'); end if;
+  insert into public.anon_usage (ip_key) values (k) on conflict do nothing;
+  if not found then return json_build_object('ok', false, 'reason', 'used'); end if;
+  return json_build_object('ok', true);
+end $$;
+
+revoke execute on function public.client_ip_key() from public, anon, authenticated;
+revoke execute on function public.get_anon_quota() from public;
+revoke execute on function public.consume_anon_download() from public;
+grant execute on function public.get_anon_quota() to anon, authenticated;
+grant execute on function public.consume_anon_download() to anon, authenticated;
+
+create or replace function public.free_limit() returns int
+language sql immutable as $$ select 1 $$;
+
+create or replace function public.current_privacy_version() returns text
+language sql immutable as $$ select '2026-10-04' $$;
+
+select cron.schedule('stamp-purge-anon-usage', '25 3 * * *',
+  $$ delete from public.anon_usage where used_at < now() - interval '90 days' $$);

@@ -58,10 +58,10 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <!-- ============================== ENGLISH ============================== -->
 <article data-l="en" lang="en">
 <h1>Privacy Policy</h1>
-<p class="meta">Version 2026-10-03. Effective from 3 October 2026.</p>
+<p class="meta">Version 2026-10-04. Effective from 4 October 2026.</p>
 
 <div class="tldr">
-<p><b>In short.</b> The proposals you build — client names, prices, your logo — stay in your browser and are never uploaded to us. The PDF is created on your device. To let you download PDFs, we store your email address, your download count and a record that you accepted this policy. We don’t sell data, show ads or use tracking cookies.</p>
+<p><b>In short.</b> The proposals you build — client names, prices, your logo — stay in your browser and are never uploaded to us. The PDF is created on your device. Your first PDF needs no account: for it we keep only a scrambled (hashed) form of your IP address for 90 days. If you sign in, we store your email address, your download count and a record that you accepted this policy. We don’t sell data, show ads or use tracking cookies.</p>
 </div>
 
 <h2>1. Who we are</h2>
@@ -75,9 +75,10 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <div class="scroll"><table>
 <thead><tr><th>Data</th><th>Purpose</th><th>Legal basis (GDPR)</th></tr></thead>
 <tbody>
-<tr><td>Email address, account ID, sign-up and last sign-in time</td><td>Sending one-time sign-in links, running your account</td><td>Contract — Art. 6(1)(b)</td></tr>
+<tr><td>Email address, account ID, sign-up and last sign-in time</td><td>Sending one-time sign-in codes, running your account</td><td>Contract — Art. 6(1)(b)</td></tr>
 <tr><td>Download records (time, free or Pro) and your free-download counter</td><td>Enforcing the free plan and your plan’s limits</td><td>Contract — Art. 6(1)(b)</td></tr>
 <tr><td>A one-way hash of your normalised email address and the number of free downloads used</td><td>Preventing the free allowance from being reset by re-registering or using email aliases</td><td>Legitimate interest in preventing abuse — Art. 6(1)(f)</td></tr>
+<tr><td>A salted one-way hash of your IP address and the time of a download made without an account</td><td>Allowing one free PDF without an account and stopping it from being repeated endlessly</td><td>Legitimate interest in preventing abuse — Art. 6(1)(f)</td></tr>
 <tr><td>Privacy Policy version you accepted and when</td><td>Showing that you were informed and agreed</td><td>Legal obligation (accountability) — Art. 6(1)(c), 5(2)</td></tr>
 <tr><td>Plan status (free or Pro, and until when)</td><td>Giving you what you paid for</td><td>Contract — Art. 6(1)(b)</td></tr>
 <tr><td>Technical logs: IP address, browser type, time of requests</td><td>Security, preventing attacks, fixing errors</td><td>Legitimate interest — Art. 6(1)(f)</td></tr>
@@ -100,6 +101,7 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <ul>
 <li>Account data, download records and consent records — until you delete your account.</li>
 <li>The hashed email key and free-download count — up to 24 months after your last free download, then deleted automatically. It is kept after account deletion only for the anti-abuse purpose in section 3 and cannot be turned back into your email address.</li>
+<li>The hashed IP address from a download without an account — 90 days, then deleted automatically.</li>
 <li>Technical logs — as kept by our providers, usually up to 90 days.</li>
 <li>Data on your device — until you clear it.</li>
 </ul>
@@ -109,7 +111,7 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <p>You also have the right to complain to a data protection authority, for example the one where you live or the President of the Personal Data Protection Office (UODO) in Poland.</p>
 
 <h2>8. Security</h2>
-<p>Connections are encrypted (HTTPS). Database access is restricted by row-level security: your browser can read only your own profile and cannot change counters or plans directly. Sign-in uses one-time links, so we never store passwords.</p>
+<p>Connections are encrypted (HTTPS). Database access is restricted by row-level security: your browser can read only your own profile and cannot change counters or plans directly. Sign-in uses one-time codes, so we never store passwords.</p>
 
 <h2>9. Children</h2>
 <p>The Service is for professionals and is not intended for anyone under 16. We don’t knowingly collect their data; if you believe a child has signed up, contact us and we’ll delete the account.</p>
@@ -124,10 +126,10 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <!-- ============================== РУССКИЙ ============================== -->
 <article data-l="ru" lang="ru">
 <h1>Политика конфиденциальности</h1>
-<p class="meta">Версия 2026-10-03. Действует с 3 октября 2026 года.</p>
+<p class="meta">Версия 2026-10-04. Действует с 4 октября 2026 года.</p>
 
 <div class="tldr">
-<p><b>Коротко.</b> КП, которые вы собираете, — имена клиентов, цены, ваш логотип — остаются в вашем браузере и не загружаются к нам. PDF создаётся на вашем устройстве. Чтобы вы могли скачивать PDF, мы храним адрес почты, количество скачиваний и отметку о том, что вы приняли эту политику. Мы не продаём данные, не показываем рекламу и не используем отслеживающие cookie.</p>
+<p><b>Коротко.</b> КП, которые вы собираете, — имена клиентов, цены, ваш логотип — остаются в вашем браузере и не загружаются к нам. PDF создаётся на вашем устройстве. Первый PDF скачивается без аккаунта: для этого мы храним только зашифрованный (хешированный) вид вашего IP-адреса 90 дней. Если вы входите в аккаунт, мы храним адрес почты, количество скачиваний и отметку о том, что вы приняли эту политику. Мы не продаём данные, не показываем рекламу и не используем отслеживающие cookie.</p>
 </div>
 
 <h2>1. Кто мы</h2>
@@ -141,9 +143,10 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <div class="scroll"><table>
 <thead><tr><th>Данные</th><th>Цель</th><th>Правовое основание (GDPR)</th></tr></thead>
 <tbody>
-<tr><td>Адрес почты, ID аккаунта, время регистрации и последнего входа</td><td>Отправка одноразовых ссылок для входа, работа аккаунта</td><td>Исполнение договора — ст. 6(1)(b)</td></tr>
+<tr><td>Адрес почты, ID аккаунта, время регистрации и последнего входа</td><td>Отправка одноразовых кодов для входа, работа аккаунта</td><td>Исполнение договора — ст. 6(1)(b)</td></tr>
 <tr><td>Записи о скачиваниях (время, бесплатное или Pro) и счётчик бесплатных скачиваний</td><td>Соблюдение лимитов бесплатного и платного тарифов</td><td>Исполнение договора — ст. 6(1)(b)</td></tr>
 <tr><td>Необратимый хеш нормализованного адреса почты и число использованных бесплатных скачиваний</td><td>Защита от обнуления бесплатного лимита повторной регистрацией или почтовыми псевдонимами</td><td>Законный интерес в защите от злоупотреблений — ст. 6(1)(f)</td></tr>
+<tr><td>Необратимый хеш вашего IP-адреса с секретной «солью» и время скачивания без аккаунта</td><td>Один бесплатный PDF без аккаунта и защита от его бесконечного повторения</td><td>Законный интерес в защите от злоупотреблений — ст. 6(1)(f)</td></tr>
 <tr><td>Версия принятой Политики и время принятия</td><td>Подтверждение того, что вы были проинформированы и согласились</td><td>Юридическая обязанность (подотчётность) — ст. 6(1)(c), 5(2)</td></tr>
 <tr><td>Статус тарифа (бесплатный или Pro и срок действия)</td><td>Предоставление оплаченных возможностей</td><td>Исполнение договора — ст. 6(1)(b)</td></tr>
 <tr><td>Технические журналы: IP-адрес, тип браузера, время запросов</td><td>Безопасность, защита от атак, исправление ошибок</td><td>Законный интерес — ст. 6(1)(f)</td></tr>
@@ -166,6 +169,7 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <ul>
 <li>Данные аккаунта, записи о скачиваниях и о согласии — до удаления аккаунта.</li>
 <li>Хеш почты и счётчик бесплатных скачиваний — до 24 месяцев после последнего бесплатного скачивания, затем удаляются автоматически. После удаления аккаунта они хранятся только для защиты от злоупотреблений (раздел 3) и не позволяют восстановить ваш адрес почты.</li>
+<li>Хеш IP-адреса при скачивании без аккаунта — 90 дней, затем удаляется автоматически.</li>
 <li>Технические журналы — столько, сколько их хранят наши провайдеры, обычно до 90 дней.</li>
 <li>Данные на вашем устройстве — пока вы их не удалите.</li>
 </ul>
@@ -175,7 +179,7 @@ html[lang="en"] [data-l="en"],html[lang="ru"] [data-l="ru"]{display:block}
 <p>Вы также вправе подать жалобу в надзорный орган по защите данных, например по месту жительства или в Управление по защите персональных данных Польши (UODO).</p>
 
 <h2>8. Безопасность</h2>
-<p>Соединения шифруются (HTTPS). Доступ к базе ограничен на уровне строк: ваш браузер может читать только ваш профиль и не может напрямую менять счётчики или тариф. Вход выполняется по одноразовым ссылкам, поэтому мы не храним пароли.</p>
+<p>Соединения шифруются (HTTPS). Доступ к базе ограничен на уровне строк: ваш браузер может читать только ваш профиль и не может напрямую менять счётчики или тариф. Вход выполняется по одноразовым кодам, поэтому мы не храним пароли.</p>
 
 <h2>9. Дети</h2>
 <p>Сервис предназначен для профессионалов и не предназначен для лиц младше 16 лет. Мы сознательно не собираем их данные. Если вы считаете, что ребёнок зарегистрировался, напишите нам — мы удалим аккаунт.</p>

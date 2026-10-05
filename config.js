@@ -7,7 +7,7 @@ window.STAMP_CONFIG = {
   SUPABASE_ANON_KEY: 'sb_publishable_tCyunVHlnzM_fRZHO5tv7g_haFP10M3',   // e.g. 'eyJhbGciOi...' or 'sb_publishable_...'
 
   // Must equal current_privacy_version() in supabase/schema.sql.
-  PRIVACY_VERSION: '2026-10-03',
+  PRIVACY_VERSION: '2026-10-04',
   PRIVACY_URL: 'privacy.html',
 
   // Shown in the footer. Use an inbox you actually read (privacy requests go here).

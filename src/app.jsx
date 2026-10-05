@@ -990,6 +990,7 @@ function Builder({ d, c, up, step, setStep, onDownload, pro, left, onPay, toast,
             <div className="final-sum"><span>{t.total}</span><b className="num"><Anim value={c.total} cur={cur} /></b></div>
             <button type="button" className={'btn btn-p cta' + (left <= 0 ? ' locked' : '')} onClick={onDownload}><Ic n={left <= 0 ? 'lock' : 'download'} s={18} />{t.download}</button>
             <p className="fine">{pro ? t.proUnlimited : left > 0 ? t.freeLeft(left, FREE_LIMIT) : t.freeOut}</p>
+            <p className="fine notice">{t.dlNotice(<PolicyLink />)}</p>
           </div>
         </>)}
       </div>
@@ -1099,38 +1100,60 @@ function AuthModal({ reason, onClose, flushDraft }) {
   const [, t] = useL();
   const [email, setEmail] = useState('');
   const [agree, setAgree] = useState(false);
-  const [state, setState] = useState('form');
+  const [code, setCode] = useState('');
+  const [state, setState] = useState('form'); // form | sending | code | resending | verifying
   const [err, setErr] = useState('');
   const input = useRef(null);
+  const onCode = state === 'code' || state === 'resending' || state === 'verifying';
   useEsc(onClose);
-  useEffect(() => { input.current && input.current.focus(); }, [state]);
-  const submit = async (e) => {
-    e.preventDefault();
-    const em = email.trim();
-    if (!EMAIL_RE.test(em)) { setErr(t.errEmail); return; }
-    if (!agree) { setErr(t.errConsent); return; }
-    setErr(''); setState('sending');
+  useEffect(() => { input.current && input.current.focus(); }, [onCode]);
+  const send = async (again) => {
+    setErr(''); setState(again ? 'resending' : 'sending');
     flushDraft();
     store.set('stamp.pendingConsent', PRIVACY_VERSION);
-    const { error } = await sb.auth.signInWithOtp({ email: em, options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
-    if (error) { setState('form'); setErr(t.errSend); return; }
-    setState('sent');
+    if (reason === 'download' || reason === 'more') store.set('stamp.pendingDownload', '1');
+    const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: location.origin + location.pathname, shouldCreateUser: true } });
+    if (error) { setState(again ? 'code' : 'form'); setErr(error.status === 429 ? t.errRate : t.errSend); return; }
+    setCode(''); setState('code');
+  };
+  const submit = (e) => {
+    e.preventDefault();
+    if (!EMAIL_RE.test(email.trim())) { setErr(t.errEmail); return; }
+    if (!agree) { setErr(t.errConsent); return; }
+    send(false);
+  };
+  const verify = async (e) => {
+    e.preventDefault();
+    const tok = code.replace(/\D/g, '');
+    if (tok.length < 6) { setErr(t.errCode); return; }
+    setErr(''); setState('verifying');
+    const { error } = await sb.auth.verifyOtp({ email: email.trim(), token: tok, type: 'email' });
+    if (error) { setState('code'); setErr(t.errCode); return; }
+    onClose(); // the sign-in handler records consent and offers the download
   };
   return (
     <div className="ov" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal small" role="dialog" aria-modal="true" aria-labelledby="au-h">
         <button type="button" className="icon-btn close" aria-label={t.close} onClick={onClose}><Ic n="x" s={18} /></button>
-        {state === 'sent' ? (
-          <div className="m-pad">
+        {onCode ? (
+          <form className="m-pad" onSubmit={verify} noValidate>
             <div className="sent-mark"><Mark s={44} letter="@" /></div>
-            <h2 id="au-h">{t.sentTitle}</h2>
-            <p className="sub">{t.sentSub(email.trim())}</p>
-            <button type="button" className="btn btn-t" onClick={() => setState('form')}>{t.otherEmail}</button>
-          </div>
+            <h2 id="au-h">{t.codeTitle}</h2>
+            <p className="sub">{t.codeSub(email.trim())}</p>
+            <label className="f"><span className="lb">{t.codeLabel}</span>
+              <input ref={input} className="in big code" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={code} onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 8)); setErr(''); }} placeholder="123456" />
+            </label>
+            {err ? <p className="err" role="alert">{err}</p> : null}
+            <button type="submit" className="btn btn-p cta" disabled={state !== 'code'}>{state === 'verifying' ? t.verifying : t.verify}</button>
+            <div className="row-links">
+              <button type="button" className="btn btn-t" disabled={state !== 'code'} onClick={() => send(true)}>{state === 'resending' ? t.sending : t.resend}</button>
+              <button type="button" className="btn btn-t" onClick={() => { setState('form'); setErr(''); }}>{t.otherEmail}</button>
+            </div>
+          </form>
         ) : (
           <form className="m-pad" onSubmit={submit} noValidate>
-            <h2 id="au-h">{reason === 'download' ? t.authTitleDl : t.authTitle}</h2>
-            <p className="sub">{t.authSub}</p>
+            <h2 id="au-h">{reason === 'more' ? t.authTitleMore : reason === 'download' ? t.authTitleDl : t.authTitle}</h2>
+            <p className="sub">{reason === 'more' ? t.authSubMore : t.authSub}</p>
             <label className="f"><span className="lb">{t.email}</span>
               <input ref={input} className="in big" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(''); }} placeholder={t.emailPh} required />
             </label>
@@ -1142,6 +1165,26 @@ function AuthModal({ reason, onClose, flushDraft }) {
             <button type="submit" className="btn btn-p cta" disabled={state === 'sending'}>{state === 'sending' ? t.sending : t.sendLink}</button>
           </form>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ReadyModal({ onDownload, onClose }) {
+  const [, t] = useL();
+  const btn = useRef(null);
+  useEsc(onClose);
+  useEffect(() => { btn.current && btn.current.focus(); }, []);
+  return (
+    <div className="ov" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal small" role="dialog" aria-modal="true" aria-labelledby="rd-h">
+        <button type="button" className="icon-btn close" aria-label={t.close} onClick={onClose}><Ic n="x" s={18} /></button>
+        <div className="m-pad">
+          <div className="sent-mark"><Mark s={44} letter="✓" /></div>
+          <h2 id="rd-h">{t.readyTitle}</h2>
+          <p className="sub">{t.readySub}</p>
+          <button type="button" ref={btn} className="btn btn-p cta" onClick={onDownload}><Ic n="download" s={18} />{t.download}</button>
+        </div>
       </div>
     </div>
   );
@@ -1218,10 +1261,14 @@ function App() {
   const [session, setSession] = useState(null);
   const [quota, setQuota] = useState(null);
   const pro = !!(quota && quota.pro);
-  const left = pro ? Infinity : quota ? Math.max(0, quota.limit - quota.used) : FREE_LIMIT;
+  const [anonAvail, setAnonAvail] = useState(null); // one free PDF without an account, checked by the server
+  const anonLeft = anonAvail === false ? 0 : 1;
+  const accountLeft = session && quota ? Math.max(0, quota.limit - quota.used) : 1;
+  const left = pro ? Infinity : Math.min(FREE_LIMIT, anonLeft + accountLeft);
   const [pay, setPay] = useState(null);
   const [auth, setAuth] = useState(null);
   const [consent, setConsent] = useState(false);
+  const [ready, setReady] = useState(false);
   const [gen, setGen] = useState(null);
   const [toastMsg, setToastMsg] = useState(null);
   const started = useRef(null);
@@ -1240,6 +1287,11 @@ function App() {
   useEffect(() => { document.documentElement.lang = lang; document.title = t.pageTitle; }, [lang]);
   useEffect(() => { const tm = setTimeout(() => store.set(DRAFT_KEY, JSON.stringify(d)), 350); return () => clearTimeout(tm); }, [d]);
   useEffect(() => { if (!toastMsg) return; const tm = setTimeout(() => setToastMsg(null), 3600); return () => clearTimeout(tm); }, [toastMsg]);
+
+  useEffect(() => {
+    if (!sb) return;
+    sb.rpc('get_anon_quota').then(({ data }) => { if (data) setAnonAvail(!!data.available); });
+  }, []);
 
   const refreshQuota = useCallback(async () => {
     if (!sb) return null;
@@ -1263,6 +1315,7 @@ function App() {
       if (!hadSession.current && evt === 'SIGNED_IN') toast(tRef.current.tSignedIn(s.user.email));
       hadSession.current = true;
       if (q && !q.privacy_ok) setConsent(true);
+      else if (store.get('stamp.pendingDownload')) { store.del('stamp.pendingDownload'); setReady(true); }
     };
     const { data } = sb.auth.onAuthStateChange((evt, s) => {
       if (evt === 'TOKEN_REFRESHED' || evt === 'USER_UPDATED') { setSession(s); return; }
@@ -1281,39 +1334,67 @@ function App() {
     if (d.demo) setD(d.demo === 'starter' ? starter(l) : demo(l));
   };
 
+  const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
+  // build the PDF, ask the server for permission, then save
+  const runDownload = async (consume) => {
+    setGen({ stage: 0 }); await wait(300);
+    setGen({ stage: 1 });
+    const pdf = await buildPdf(exportRef.current, d, t);
+    setGen({ stage: 2 });
+    const r = await consume();
+    if (!r.ok) { setGen(null); return r; }
+    const name = fileName(d, lang);
+    const cap = await dl.current;
+    setGen({ stage: 3 });
+    if (cap) await cap.save({ filename: name, data: new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' }) });
+    else pdf.save(name);
+    setGen({ stage: 3, done: true }); await wait(900);
+    setGen(null);
+    return r;
+  };
+  const consumeAnon = async () => {
+    const { data, error } = await sb.rpc('consume_anon_download');
+    if (error || !data) throw new Error('server');
+    setAnonAvail(false);
+    return data;
+  };
+  const consumeAccount = async () => {
+    const { data: r, error } = await sb.rpc('consume_download');
+    if (error || !r) throw new Error('server');
+    setQuota((p) => ({ ...(p || {}), used: r.used, limit: r.limit, pro: r.pro, privacy_ok: r.reason !== 'privacy' }));
+    return r;
+  };
+
   const download = async () => {
     if (busy.current) return;
     if (!d.items.some((i) => i.name.trim() || num(i.price))) { toast(t.tNeedItem); setStep(1); return; }
     if (!sb) { toast(t.setupMissing); return; }
-    if (!session) { setAuth('download'); return; }
     busy.current = true;
-    const wait = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
     try {
+      if (!session) {
+        // first PDF: no account needed
+        if (anonAvail === false) { setAuth('more'); return; }
+        const r = await runDownload(consumeAnon);
+        if (r.ok) toast(t.tAnonSaved); else setAuth('more');
+        return;
+      }
       const q = quota || await refreshQuota();
       if (!q) { toast(t.tServer); return; }
       if (!q.privacy_ok) { setConsent(true); return; }
-      if (!q.pro && q.used >= q.limit) { setPay('limit'); return; }
-      setGen({ stage: 0 }); await wait(300);
-      setGen({ stage: 1 });
-      const pdf = await buildPdf(exportRef.current, d, t);
-      setGen({ stage: 2 });
-      // the server decides whether this download is allowed and counts it
-      const { data: r, error } = await sb.rpc('consume_download');
-      if (error || !r) throw new Error('server');
-      setQuota((p) => ({ ...(p || {}), used: r.used, limit: r.limit, pro: r.pro, privacy_ok: r.reason !== 'privacy' }));
+      if (!q.pro && q.used >= q.limit) {
+        if (anonAvail !== false) {
+          const r = await runDownload(consumeAnon);
+          if (r.ok) { toast(t.tSavedOut); return; }
+        }
+        setPay('limit'); return;
+      }
+      const r = await runDownload(consumeAccount);
       if (!r.ok) {
-        setGen(null);
         if (r.reason === 'privacy') setConsent(true); else setPay('limit');
         return;
       }
-      const name = fileName(d, lang);
-      const cap = await dl.current;
-      setGen({ stage: 3 });
-      if (cap) await cap.save({ filename: name, data: new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' }) });
-      else pdf.save(name);
-      setGen({ stage: 3, done: true }); await wait(900);
-      setGen(null);
-      toast(r.pro ? t.tSaved : r.used >= r.limit ? t.tSavedOut : t.tSavedLeft(r.limit - r.used, r.limit));
+      const rest = (r.limit - r.used) + (anonAvail === false ? 0 : 1);
+      toast(r.pro ? t.tSaved : rest <= 0 ? t.tSavedOut : t.tSavedLeft(Math.min(rest, FREE_LIMIT), FREE_LIMIT));
     } catch (e) {
       setGen(null);
       const code = e && e.code;
@@ -1466,6 +1547,7 @@ function App() {
       {pay ? <Paywall reason={pay} d={d} c={c} onClose={() => setPay(null)} onBuy={buy} elapsed={started.current ? Date.now() - started.current : 0} /> : null}
       {auth ? <AuthModal reason={auth} onClose={() => setAuth(null)} flushDraft={flushDraft} /> : null}
       {consent && session ? <ConsentModal onAccepted={(q) => { setQuota(q); setConsent(false); }} onSignOut={signOut} onClose={() => setConsent(false)} /> : null}
+      {ready && session && !consent ? <ReadyModal onDownload={() => { setReady(false); download(); }} onClose={() => setReady(false)} /> : null}
       {gen ? <Gen g={gen} accent={d.style.accent} /> : null}
       {toastMsg ? <div className="toast" key={toastMsg.k} role="status">{toastMsg.m}</div> : null}
     </LangCtx.Provider>

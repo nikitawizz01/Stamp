@@ -448,3 +448,9 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:30px;background-
   .m-pad{padding:30px 20px 22px}
   .foot{flex-direction:column;gap:10px;align-items:flex-start}
 }
+
+/* sign-in code */
+.in.code{font-size:26px;letter-spacing:.32em;text-align:center;font-variant-numeric:tabular-nums;font-weight:600}
+.row-links{display:flex;justify-content:center;gap:4px;flex-wrap:wrap}
+.fine.notice{font-size:11.5px}
+.fine.notice a{color:inherit;text-underline-offset:2px}
